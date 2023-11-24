@@ -65,7 +65,7 @@ var embeddedBeaconRootContract = `
   }
   `
 
-var beaconRootContractAddress = common.BigToAddress(big.NewInt(0x0b))
+var beaconRootContractAddress = common.HexToAddress("0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02")
 
 var (
 	CLIQUE_PERIOD_DEFAULT        = uint64(2)
@@ -321,6 +321,15 @@ func BuildExecutionGenesis(
 			panic(err)
 		}
 		genesis.Alloc[beaconRootContractAddress] = beaconRootContractAcc
+
+		if genesis.Timestamp >= *chainConfig.CancunTime {
+			if genesis.BlobGasUsed == nil {
+				genesis.BlobGasUsed = new(uint64)
+			}
+			if genesis.ExcessBlobGas == nil {
+				genesis.ExcessBlobGas = new(uint64)
+			}
+		}
 	}
 
 	wrappedGenesis := &ExecutionGenesis{
@@ -355,7 +364,7 @@ func (conf *ExecutionGenesis) ToParams(
 ) hivesim.Params {
 	params := hivesim.Params{
 		"HIVE_DEPOSIT_CONTRACT_ADDRESS": common.Address(depositAddress).String(),
-		"HIVE_NETWORK_ID":               fmt.Sprintf("%d", conf.NetworkID),
+		"HIVE_NETWORK_ID":               fmt.Sprintf("%d", conf.NetworkID()),
 		"HIVE_CHAIN_ID":                 conf.Genesis.Config.ChainID.String(),
 		"HIVE_FORK_HOMESTEAD":           conf.Genesis.Config.HomesteadBlock.String(),
 		//"HIVE_FORK_DAO_BLOCK":           conf.Genesis.Config.DAOForkBlock.String(),  // nil error, not used anyway
