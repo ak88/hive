@@ -5,14 +5,5 @@ Execution and Consensus clients on the Deneb+Cancun (Dencun) hard-fork.
 
 ## Test Suites
 
-### Testnet Simulations
+[Link](TESTS.md)
 
-[Link](suites/base/README.md)
-
-### Sync Simulations
-
-[Link](suites/sync/README.md)
-
-### Builder Simulations
-
-[Link](suites/builder/README.md)
