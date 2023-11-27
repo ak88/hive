@@ -10,7 +10,12 @@ import (
 // Description struct to hold the description of a test structured in different categories
 type Description struct {
 	Main        string
-	Subsections map[string][]string
+	Subsections []*subsection
+}
+
+type subsection struct {
+	category string
+	items    []string
 }
 
 const (
@@ -23,32 +28,31 @@ const (
 func NewDescription(main string) *Description {
 	return &Description{
 		Main:        main,
-		Subsections: make(map[string][]string),
+		Subsections: make([]*subsection, 0),
 	}
 }
 
-// Copy creates a copy of the description
-func (d *Description) Copy() *Description {
-	subsections := make(map[string][]string)
-	for category, items := range d.Subsections {
-		subsections[category] = items[:]
+func (d *Description) getSubsection(category string) *subsection {
+	for _, s := range d.Subsections {
+		if s.category == category {
+			return s
+		}
 	}
-	return &Description{
-		Main:        d.Main,
-		Subsections: subsections,
+	s := &subsection{
+		category: category,
+		items:    make([]string, 0),
 	}
+	d.Subsections = append(d.Subsections, s)
+	return s
 }
 
 // Add method to add an item to a category
 func (d *Description) Add(category, item string) {
 	// Check if the category already exists
-	_, exists := d.Subsections[category]
-	if !exists {
-		// Create a new category if it doesn't exist
-		d.Subsections[category] = []string{}
-	}
+	s := d.getSubsection(category)
+
 	// Append the item to the category
-	d.Subsections[category] = append(d.Subsections[category], item)
+	s.items = append(s.items, item)
 }
 
 func (d *Description) Format() string {
@@ -57,11 +61,11 @@ func (d *Description) Format() string {
 	// Add the main description
 	sb.WriteString(dedent.Dedent(d.Main))
 	// Iterate over the categories
-	for category, Subsections := range d.Subsections {
+	for _, s := range d.Subsections {
 		// Add the category to the string builder
-		sb.WriteString(fmt.Sprintf("\n\n#### %s\n\n", category))
+		sb.WriteString(fmt.Sprintf("\n\n#### %s\n\n", s.category))
 		// Iterate over the Subsections
-		for _, item := range Subsections {
+		for _, item := range s.items {
 			// Add the item to the string builder
 			sb.WriteString(dedent.Dedent(item))
 		}
