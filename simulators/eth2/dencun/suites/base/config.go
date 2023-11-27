@@ -186,6 +186,10 @@ func (ts BaseTestSpec) GetDescription() *helper.Description {
 	desc.Add(helper.CategoryVerificationsConsensusClient, `
 	  - For each blob transaction on the execution chain, the blob sidecars are available for the beacon block at the same height
 	  - The beacon block lists the correct commitments for each blob`)
+	if ts.WaitForFinality {
+		desc.Add(helper.CategoryVerificationsConsensusClient, `
+		- After all other verifications are done, the beacon chain is able to finalize the current epoch`)
+	}
 
 	return desc
 }

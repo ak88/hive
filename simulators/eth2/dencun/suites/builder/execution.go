@@ -12,6 +12,11 @@ import (
 	beacon "github.com/protolambda/zrnt/eth2/beacon/common"
 )
 
+const (
+	MAX_MISSED_SLOTS_BEFORE_CIRCUIT_BREAKER uint64 = 10
+	MAX_MISSED_SLOTS_NO_CIRCUIT_BREAKER     uint64 = 1
+)
+
 // Builder testnet.
 func (ts BuilderTestSpec) ExecutePostFork(
 	t *hivesim.T,
@@ -48,6 +53,8 @@ func (ts BuilderTestSpec) ExecutePostFork(
 }
 
 func (ts BuilderTestSpec) InvalidPayloadCaughtBeforeReveal() bool {
+	// If true, the invalid payload should be caught by the consensus client and not be signed.
+	// The consensus client should fallback to local block production and not miss any slots.
 	if ts.ErrorOnHeaderRequest {
 		// An error on header request to the builder should fallback to local block production,
 		// and hence there isn't even a blinded payload to process.
@@ -211,14 +218,14 @@ func (ts BuilderTestSpec) Verify(
 		if ts.InvalidPayloadCaughtBeforeReveal() {
 			// These errors should be caught by the CL client when the built blinded
 			// payload is received. Hence, a low number of missed slots is expected.
-			max_missed_slots = 1
+			max_missed_slots = MAX_MISSED_SLOTS_NO_CIRCUIT_BREAKER
 		} else {
 			// All other errors cannot be caught by the CL client until the
 			// payload is revealed, and the beacon block had been signed.
 			// Hence, a high number of missed slots is expected because the
 			// circuit breaker is a mechanism that only kicks in after many
 			// missed slots.
-			max_missed_slots = 10
+			max_missed_slots = MAX_MISSED_SLOTS_BEFORE_CIRCUIT_BREAKER
 		}
 
 		denebEpoch := beacon.Epoch(config.DenebForkEpoch.Uint64())
