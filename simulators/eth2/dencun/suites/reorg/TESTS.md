@@ -15,7 +15,7 @@ Collection of test vectors that use a ExecutionClient+BeaconNode+ValidatorClient
 
 ## Test Cases
 
-### test-reorg-from-capella-
+### - test-reorg-from-capella-
 
 #### Run
 
@@ -56,7 +56,7 @@ Start two clients disconnected from each other, then connect them through a thir
 - For each blob transaction on the execution chain, the blob sidecars are available for the beacon block at the same height
 - The beacon block lists the correct commitments for each blob
 
-### test-reorg-from-deneb-
+### - test-reorg-from-deneb-
 
 #### Run
 

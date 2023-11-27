@@ -15,154 +15,7 @@ Collection of test vectors that verify client behavior under different blob goss
 
 ## Test Cases
 
-### Equivocating Block and Blobs
-
-#### Run
-
-<details>
-<summary>Command-line</summary>
-
-```bash
-./hive --client <CLIENTS> --sim eth2/dencun --sim.limit "eth2-deneb-p2p-blobs-gossip/equivocating-block-and-blobs-"
-```
-
-</details>
-
-#### Description
-
-
-Test chain health a proposer sends equivocating blobs and block to different peers
-
-
-#### Testnet Configuration
-
-
-- Node Count: 2
-- Validating Node Count: 2
-- Validator Key Count: 128
-- Validator Key per Node: 64- Genesis Fork: Deneb
-- Execution Withdrawal Credentials Count: 128
-- BLS Withdrawal Credentials Count: 0
-
-#### Verifications (Execution Client)
-
-
-- Blob (type-3) transactions are included in the blocks
-
-#### Verifications (Consensus Client)
-
-
-- For each blob transaction on the execution chain, the blob sidecars are available for the beacon block at the same height
-- The beacon block lists the correct commitments for each blob
-
-#### Blobber Behavior
-
-
-- Create an equivocating block by modifying the graffiti
-- Sign both blocks
-- Generate blob sidecars for both blocks
-- Broadcast the blob sidecars for both blocks to different peers
-- Broadcast the signed blocks to different peers
-
-### Equivocating Block Header in Blob Sidecars
-
-#### Run
-
-<details>
-<summary>Command-line</summary>
-
-```bash
-./hive --client <CLIENTS> --sim eth2/dencun --sim.limit "eth2-deneb-p2p-blobs-gossip/equivocating-block-header-in-blob-sidecars-"
-```
-
-</details>
-
-#### Description
-
-
-Test chain health a proposer sends equivocating blob sidecars (equivocating block header), but the correct full block is sent first.
-
-
-#### Testnet Configuration
-
-
-- Node Count: 2
-- Validating Node Count: 2
-- Validator Key Count: 128
-- Validator Key per Node: 64- Genesis Fork: Deneb
-- Execution Withdrawal Credentials Count: 128
-- BLS Withdrawal Credentials Count: 0
-
-#### Verifications (Execution Client)
-
-
-- Blob (type-3) transactions are included in the blocks
-
-#### Verifications (Consensus Client)
-
-
-- For each blob transaction on the execution chain, the blob sidecars are available for the beacon block at the same height
-- The beacon block lists the correct commitments for each blob
-
-#### Blobber Behavior
-
-
-- Create an equivocating block by modifying the graffiti
-- Sign both blocks
-- Generate the sidecars out of the equivocating signed block only
-- Broadcast the first signed block only
-- Broadcast the blob sidecars
-
-### Equivocating Block Header in Blob Sidecars 2
-
-#### Run
-
-<details>
-<summary>Command-line</summary>
-
-```bash
-./hive --client <CLIENTS> --sim eth2/dencun --sim.limit "eth2-deneb-p2p-blobs-gossip/equivocating-block-header-in-blob-sidecars-2-"
-```
-
-</details>
-
-#### Description
-
-
-Test chain health a proposer sends equivocating blob sidecars (equivocating block header), and the correct full block is sent afterwards.
-
-
-#### Testnet Configuration
-
-
-- Node Count: 2
-- Validating Node Count: 2
-- Validator Key Count: 128
-- Validator Key per Node: 64- Genesis Fork: Deneb
-- Execution Withdrawal Credentials Count: 128
-- BLS Withdrawal Credentials Count: 0
-
-#### Verifications (Execution Client)
-
-
-- Blob (type-3) transactions are included in the blocks
-
-#### Verifications (Consensus Client)
-
-
-- For each blob transaction on the execution chain, the blob sidecars are available for the beacon block at the same height
-- The beacon block lists the correct commitments for each blob
-
-#### Blobber Behavior
-
-
-- Create an equivocating block by modifying the graffiti
-- Sign both blocks
-- Generate the sidecars out of the equivocating signed block only
-- Broadcast the blob sidecars
-- Broadcast the first signed block only
-
-### Blob Gossiping Sanity
+### - Blob Gossiping Sanity
 
 #### Run
 
@@ -210,7 +63,7 @@ Sanity test where the blobber is verified to be working correctly
 - Broadcast the block
 - Broadcast the blob sidecars
 
-### Blob Gossiping Before Block
+### - Blob Gossiping Before Block
 
 #### Run
 
@@ -258,7 +111,7 @@ Test chain health where the blobs are gossiped before the block
 - Broadcast the blob sidecars
 - Broadcast the block
 
-### Blob Gossiping Delay
+### - Blob Gossiping Delay
 
 #### Run
 
@@ -307,7 +160,7 @@ Test chain health where the blobs are gossiped after the block with a 500ms dela
 - Insert a delay of 500 milliseconds
 - Broadcast the blob sidecars
 
-### Blob Gossiping One-Slot Delay
+### - Blob Gossiping One-Slot Delay
 
 #### Run
 
@@ -356,7 +209,7 @@ Test chain health where the blobs are gossiped after the block with a 6s delay
 - Insert a delay of 6000 milliseconds
 - Broadcast the blob sidecars
 
-### Equivocating Block
+### - Equivocating Block
 
 #### Run
 
@@ -407,4 +260,151 @@ Blob sidecars contain the correct block header.
 - Broadcast the equivocating signed block
 - Insert a delay of 500 milliseconds
 - Broadcast the correct signed block
+
+### - Equivocating Block and Blobs
+
+#### Run
+
+<details>
+<summary>Command-line</summary>
+
+```bash
+./hive --client <CLIENTS> --sim eth2/dencun --sim.limit "eth2-deneb-p2p-blobs-gossip/equivocating-block-and-blobs-"
+```
+
+</details>
+
+#### Description
+
+
+Test chain health a proposer sends equivocating blobs and block to different peers
+
+
+#### Testnet Configuration
+
+
+- Node Count: 2
+- Validating Node Count: 2
+- Validator Key Count: 128
+- Validator Key per Node: 64- Genesis Fork: Deneb
+- Execution Withdrawal Credentials Count: 128
+- BLS Withdrawal Credentials Count: 0
+
+#### Verifications (Execution Client)
+
+
+- Blob (type-3) transactions are included in the blocks
+
+#### Verifications (Consensus Client)
+
+
+- For each blob transaction on the execution chain, the blob sidecars are available for the beacon block at the same height
+- The beacon block lists the correct commitments for each blob
+
+#### Blobber Behavior
+
+
+- Create an equivocating block by modifying the graffiti
+- Sign both blocks
+- Generate blob sidecars for both blocks
+- Broadcast the blob sidecars for both blocks to different peers
+- Broadcast the signed blocks to different peers
+
+### - Equivocating Block Header in Blob Sidecars
+
+#### Run
+
+<details>
+<summary>Command-line</summary>
+
+```bash
+./hive --client <CLIENTS> --sim eth2/dencun --sim.limit "eth2-deneb-p2p-blobs-gossip/equivocating-block-header-in-blob-sidecars-"
+```
+
+</details>
+
+#### Description
+
+
+Test chain health a proposer sends equivocating blob sidecars (equivocating block header), but the correct full block is sent first.
+
+
+#### Testnet Configuration
+
+
+- Node Count: 2
+- Validating Node Count: 2
+- Validator Key Count: 128
+- Validator Key per Node: 64- Genesis Fork: Deneb
+- Execution Withdrawal Credentials Count: 128
+- BLS Withdrawal Credentials Count: 0
+
+#### Verifications (Execution Client)
+
+
+- Blob (type-3) transactions are included in the blocks
+
+#### Verifications (Consensus Client)
+
+
+- For each blob transaction on the execution chain, the blob sidecars are available for the beacon block at the same height
+- The beacon block lists the correct commitments for each blob
+
+#### Blobber Behavior
+
+
+- Create an equivocating block by modifying the graffiti
+- Sign both blocks
+- Generate the sidecars out of the equivocating signed block only
+- Broadcast the first signed block only
+- Broadcast the blob sidecars
+
+### - Equivocating Block Header in Blob Sidecars 2
+
+#### Run
+
+<details>
+<summary>Command-line</summary>
+
+```bash
+./hive --client <CLIENTS> --sim eth2/dencun --sim.limit "eth2-deneb-p2p-blobs-gossip/equivocating-block-header-in-blob-sidecars-2-"
+```
+
+</details>
+
+#### Description
+
+
+Test chain health a proposer sends equivocating blob sidecars (equivocating block header), and the correct full block is sent afterwards.
+
+
+#### Testnet Configuration
+
+
+- Node Count: 2
+- Validating Node Count: 2
+- Validator Key Count: 128
+- Validator Key per Node: 64- Genesis Fork: Deneb
+- Execution Withdrawal Credentials Count: 128
+- BLS Withdrawal Credentials Count: 0
+
+#### Verifications (Execution Client)
+
+
+- Blob (type-3) transactions are included in the blocks
+
+#### Verifications (Consensus Client)
+
+
+- For each blob transaction on the execution chain, the blob sidecars are available for the beacon block at the same height
+- The beacon block lists the correct commitments for each blob
+
+#### Blobber Behavior
+
+
+- Create an equivocating block by modifying the graffiti
+- Sign both blocks
+- Generate the sidecars out of the equivocating signed block only
+- Broadcast the blob sidecars
+- Broadcast the first signed block only
 

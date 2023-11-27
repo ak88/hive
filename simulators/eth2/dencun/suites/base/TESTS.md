@@ -15,7 +15,7 @@ Collection of test vectors that use a ExecutionClient+BeaconNode+ValidatorClient
 
 ## Test Cases
 
-### Deneb Fork
+### - Deneb Fork
 
 #### Run
 
@@ -53,7 +53,7 @@ Sanity test to check the fork transition to deneb.
 - For each blob transaction on the execution chain, the blob sidecars are available for the beacon block at the same height
 - The beacon block lists the correct commitments for each blob
 
-### Deneb Genesis
+### - Deneb Genesis
 
 #### Run
 
