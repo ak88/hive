@@ -177,26 +177,23 @@ func (ts BuilderTestSpec) Verify(
 						err,
 					)
 				}
-				for _, ec := range testnet.ExecutionClients().Running() {
+				for i, ec := range testnet.ExecutionClients().Running() {
 					b, err := ec.BlockByNumber(
 						ctx,
 						big.NewInt(int64(p.Number)),
 					)
-					if err != nil {
-						t.Fatalf(
-							"FAIL: Error getting execution block %d: %v",
-							p.Number,
-							err,
-						)
-					}
-					h := b.Hash()
-					if bytes.Equal(h[:], p.BlockHash[:]) {
-						t.Fatalf(
-							"FAIL: Modified payload included in canonical chain: %d (%s)",
-							p.Number,
-							p.BlockHash,
-						)
-					}
+					if err == nil {
+						// If block is found, verify that this is different from the modified payload
+						h := b.Hash()
+						if bytes.Equal(h[:], p.BlockHash[:]) {
+							t.Fatalf(
+								"FAIL: node %d: modified payload included in canonical chain: %d (%s)",
+								i,
+								p.Number,
+								p.BlockHash,
+							)
+						}
+					} // else: block not found, payload not included in canonical chain
 				}
 			}
 			t.Logf(
