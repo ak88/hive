@@ -370,8 +370,8 @@ github.com/lithammer/dedent v1.1.0/go.mod h1:jrXYCQtgg0nJiN+StA2KgR7w6CiQNv9Fd/Z
 github.com/lunixbochs/vtclean v1.0.0/go.mod h1:pHhQNgMf3btfWnGBVipUOjRYhoOsdGqdm/+2c2E2WMI=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/mailru/easyjson v0.0.0-20190312143242-1de009706dbe/go.mod h1:C1wdFJiN94OJF2b5HbByQZoLdCWB1Yqtg26g4irojpc=
-github.com/marioevz/blobber v1.0.5-0.20231129215331-dcfb606795ce h1:gO+Ir53Ibphq3di2OEeBrPeg+UBjTwZ87bflNC4ZTCQ=
-github.com/marioevz/blobber v1.0.5-0.20231129215331-dcfb606795ce/go.mod h1:eO71mA0m7D8JjrwAkGzbnjrlbiNNUvpeOkeCcIRZWDo=
+github.com/marioevz/blobber v1.0.5-0.20231129224810-faf8d06f242c h1:zadIXIJgvXWjpirtO8d1R7de7cyAleMfrC2Z38aIOe8=
+github.com/marioevz/blobber v1.0.5-0.20231129224810-faf8d06f242c/go.mod h1:eO71mA0m7D8JjrwAkGzbnjrlbiNNUvpeOkeCcIRZWDo=
 github.com/marioevz/eth-clients v0.0.0-20231123180401-b4230c802498 h1:FHzV7rVAhib6tRhR/e4UTWupqWw3ikIme06O1x96Ynk=
 github.com/marioevz/eth-clients v0.0.0-20231123180401-b4230c802498/go.mod h1:bhR5rKHekIvdWmsWUqRP6X6dLl05ohnH3X/+ZvKs3xg=
 github.com/marioevz/eth2api v0.0.0-20230922201437-72bd1301e033 h1:sn57n+lbJrLS8FKYs08W7TEzraTGOCQGrSC4hni6rYw=

@@ -81,7 +81,7 @@ func init() {
 				Name:        "invalid-equivocating-block",
 				DisplayName: "Invalid Equivocating Block",
 				Description: `
-		Test chain health a proposer sends an invalid equivocating block and the correct block
+		Test chain health if a proposer sends an invalid equivocating block and the correct block
 		at the same time to different peers.
 
 		Blob sidecars contain the correct block header.
@@ -105,7 +105,7 @@ func init() {
 				Name:        "equivocating-block-and-blobs",
 				DisplayName: "Equivocating Block and Blobs",
 				Description: `
-		Test chain health a proposer sends equivocating blobs and block to different peers
+		Test chain health if a proposer sends equivocating blobs and block to different peers
 		`,
 				DenebGenesis: true,
 				GenesisExecutionWithdrawalCredentialsShares: 1,
@@ -122,7 +122,7 @@ func init() {
 				Name:        "equivocating-block-header-in-blob-sidecars",
 				DisplayName: "Equivocating Block Header in Blob Sidecars",
 				Description: `
-		Test chain health a proposer sends equivocating blob sidecars (equivocating block header), but the correct full block is sent first.
+		Test chain health if a proposer sends equivocating blob sidecars (equivocating block header), but the correct full block is sent first.
 		`,
 				DenebGenesis: true,
 				GenesisExecutionWithdrawalCredentialsShares: 1,
@@ -139,13 +139,29 @@ func init() {
 				Name:        "equivocating-block-header-in-blob-sidecars-2",
 				DisplayName: "Equivocating Block Header in Blob Sidecars 2",
 				Description: `
-		Test chain health a proposer sends equivocating blob sidecars (equivocating block header), and the correct full block is sent afterwards.
+		Test chain health if a proposer sends equivocating blob sidecars (equivocating block header), and the correct full block is sent afterwards.
 		`,
 				DenebGenesis: true,
 				GenesisExecutionWithdrawalCredentialsShares: 1,
 			},
 			// Slot is missed because the blob with the correct header are never sent
 			BlobberActionCausesMissedSlot: true,
+		},
+
+		P2PBlobsGossipTestSpec{
+			BlobberSlotAction: blobber_slot_actions.EquivocatingBlobSidecars{
+				BroadcastBlobsFirst: true,
+			},
+			BaseTestSpec: suite_base.BaseTestSpec{
+				Name:        "equivocating-blobs",
+				DisplayName: "Equivocating Blob Sidecars",
+				Description: `
+		Test chain health if a proposer sends equivocating blob sidecars (equivocating block header) to a set of peers, and the correct blob sidecars to another set of peers. The correct block is sent to all peers afterwards.
+		`,
+				DenebGenesis: true,
+				GenesisExecutionWithdrawalCredentialsShares: 1,
+			},
+			BlobberActionCausesMissedSlot: false,
 		},
 	)
 }
