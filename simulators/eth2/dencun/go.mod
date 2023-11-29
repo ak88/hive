@@ -8,7 +8,7 @@ require (
 	github.com/ethereum/hive/simulators/eth2/common v0.0.0-20230316220410-1364352c32a6
 	github.com/ethereum/hive/simulators/ethereum/engine v0.0.0-20231019225633-d252d81aded0
 	github.com/lithammer/dedent v1.1.0
-	github.com/marioevz/blobber v1.0.5-0.20231129001538-6f623f4867bc
+	github.com/marioevz/blobber v1.0.5-0.20231129215331-dcfb606795ce
 	github.com/marioevz/eth-clients v0.0.0-20231123180401-b4230c802498
 	github.com/marioevz/mock-builder v1.1.1-0.20231123171249-08b59e943190
 	github.com/protolambda/eth2api v0.0.0-20230316214135-5f8afbd6d05d
