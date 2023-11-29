@@ -52,7 +52,7 @@ func (ts P2PBlobsGossipTestSpec) Verify(
 			// Check that the must-include blobs are in the chain
 			for _, includeKzg := range mustIncludeBlobs.Get(slot) {
 				if !KZGListContains(blockKzgCommitments, includeKzg) {
-					t.Fatalf("FAIL: Bad blob missing from the chain: node=%d, slot=%d, kzg_commitment=%s", i, slot, includeKzg)
+					t.Fatalf("FAIL: Good blob missing from the chain: node=%d, slot=%d, kzg_commitment=%s", i, slot, includeKzg)
 				}
 			}
 
