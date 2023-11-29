@@ -76,21 +76,26 @@ func init() {
 			BlobberActionCausesMissedSlot: true,
 		},
 		P2PBlobsGossipTestSpec{
-			BlobberSlotAction: blobber_slot_actions.EquivocatingBlock{
-				CorrectBlockDelayMilliseconds: 500,
-			},
+			BlobberSlotAction: blobber_slot_actions.InvalidEquivocatingBlock{},
 			BaseTestSpec: suite_base.BaseTestSpec{
-				Name:        "equivocating-block",
-				DisplayName: "Equivocating Block",
+				Name:        "invalid-equivocating-block",
+				DisplayName: "Invalid Equivocating Block",
 				Description: `
-		Test chain health a proposer sends an equivocating block before the correct block.
+		Test chain health a proposer sends an invalid equivocating block and the correct block
+		at the same time to different peers.
+
 		Blob sidecars contain the correct block header.
+
+		Slot action is executed every other slot because, although it does not cause a missed slot,
+		clients might reject the p2p block message due to it being a slashable offense, so this
+		delay makes the test more deterministic.
 		`,
 				DenebGenesis: true,
 				GenesisExecutionWithdrawalCredentialsShares: 1,
 			},
-			// Action should not cause missed slots since the blob sidecars and the block are available
-			BlobberActionCausesMissedSlot: false,
+			// Action does not cause a missed slot but clients do reject the p2p block message
+			// due to it being a slashable offense, so this delay makes the test more deterministic.
+			BlobberActionCausesMissedSlot: true,
 		},
 		P2PBlobsGossipTestSpec{
 			BlobberSlotAction: blobber_slot_actions.EquivocatingBlockAndBlobs{
