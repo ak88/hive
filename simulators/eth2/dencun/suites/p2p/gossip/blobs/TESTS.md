@@ -209,7 +209,7 @@ Test chain health where the blobs are gossiped after the block with a 6s delay
 - Insert a delay of 6000 milliseconds
 - Broadcast the blob sidecars
 
-### - Equivocating Block
+### - Invalid Equivocating Block
 
 #### Run
 
@@ -217,7 +217,7 @@ Test chain health where the blobs are gossiped after the block with a 6s delay
 <summary>Command-line</summary>
 
 ```bash
-./hive --client <CLIENTS> --sim eth2/dencun --sim.limit "eth2-deneb-p2p-blobs-gossip/equivocating-block-"
+./hive --client <CLIENTS> --sim eth2/dencun --sim.limit "eth2-deneb-p2p-blobs-gossip/invalid-equivocating-block-"
 ```
 
 </details>
@@ -225,8 +225,14 @@ Test chain health where the blobs are gossiped after the block with a 6s delay
 #### Description
 
 
-Test chain health a proposer sends an equivocating block before the correct block.
+Test chain health if a proposer sends an invalid equivocating block and the correct block
+at the same time to different peers.
+
 Blob sidecars contain the correct block header.
+
+Slot action is executed every other slot because, although it does not cause a missed slot,
+clients might reject the p2p block message due to it being a slashable offense, so this
+delay makes the test more deterministic.
 
 
 #### Testnet Configuration
@@ -257,9 +263,7 @@ Blob sidecars contain the correct block header.
 - Sign both blocks
 - Generate the sidecars out of the correct block only
 - Broadcast the blob sidecars
-- Broadcast the equivocating signed block
-- Insert a delay of 500 milliseconds
-- Broadcast the correct signed block
+- Broadcast the equivocating signed block and the correct signed block to different peers
 
 ### - Equivocating Block and Blobs
 
@@ -277,7 +281,7 @@ Blob sidecars contain the correct block header.
 #### Description
 
 
-Test chain health a proposer sends equivocating blobs and block to different peers
+Test chain health if a proposer sends equivocating blobs and block to different peers
 
 
 #### Testnet Configuration
@@ -326,7 +330,7 @@ Test chain health a proposer sends equivocating blobs and block to different pee
 #### Description
 
 
-Test chain health a proposer sends equivocating blob sidecars (equivocating block header), but the correct full block is sent first.
+Test chain health if a proposer sends equivocating blob sidecars (equivocating block header), but the correct full block is sent first.
 
 
 #### Testnet Configuration
@@ -356,8 +360,8 @@ Test chain health a proposer sends equivocating blob sidecars (equivocating bloc
 - Create an equivocating block by modifying the graffiti
 - Sign both blocks
 - Generate the sidecars out of the equivocating signed block only
-- Broadcast the first signed block only
-- Broadcast the blob sidecars
+- Broadcast the original signed block only
+- Broadcast the blob sidecars with the equivocating block header
 
 ### - Equivocating Block Header in Blob Sidecars 2
 
@@ -375,7 +379,7 @@ Test chain health a proposer sends equivocating blob sidecars (equivocating bloc
 #### Description
 
 
-Test chain health a proposer sends equivocating blob sidecars (equivocating block header), and the correct full block is sent afterwards.
+Test chain health if a proposer sends equivocating blob sidecars (equivocating block header), and the correct full block is sent afterwards.
 
 
 #### Testnet Configuration
@@ -405,6 +409,55 @@ Test chain health a proposer sends equivocating blob sidecars (equivocating bloc
 - Create an equivocating block by modifying the graffiti
 - Sign both blocks
 - Generate the sidecars out of the equivocating signed block only
-- Broadcast the blob sidecars
-- Broadcast the first signed block only
+- Broadcast the blob sidecars with the equivocating block header
+- Broadcast the original signed block only
+
+### - Equivocating Blob Sidecars
+
+#### Run
+
+<details>
+<summary>Command-line</summary>
+
+```bash
+./hive --client <CLIENTS> --sim eth2/dencun --sim.limit "eth2-deneb-p2p-blobs-gossip/equivocating-blobs-"
+```
+
+</details>
+
+#### Description
+
+
+Test chain health if a proposer sends equivocating blob sidecars (equivocating block header) to a set of peers, and the correct blob sidecars to another set of peers. The correct block is sent to all peers afterwards.
+
+
+#### Testnet Configuration
+
+
+- Node Count: 2
+- Validating Node Count: 2
+- Validator Key Count: 128
+- Validator Key per Node: 64- Genesis Fork: Deneb
+- Execution Withdrawal Credentials Count: 128
+- BLS Withdrawal Credentials Count: 0
+
+#### Verifications (Execution Client)
+
+
+- Blob (type-3) transactions are included in the blocks
+
+#### Verifications (Consensus Client)
+
+
+- For each blob transaction on the execution chain, the blob sidecars are available for the beacon block at the same height
+- The beacon block lists the correct commitments for each blob
+
+#### Blobber Behavior
+
+
+- Create an equivocating block by modifying the graffiti
+- Sign both blocks
+- Generate blob sidecar bundles out of both signed blocks
+- Broadcast both blob sidecar bundles to different peers
+- Broadcast the original signed block only
 

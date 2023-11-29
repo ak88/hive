@@ -52,6 +52,7 @@ Test canonical chain includes deneb payloads built by the builder api.
 - Deneb/Cancun transition occurs on Epoch 1 or 5
 	- Epoch depends on whether builder workflow activation requires finalization [on the CL client](#clients-that-require-finalization-to-enable-builder).
 - Builder is enabled for all nodes
+- Builder action is only enabled after fork
 - Nodes have the mock-builder configured as builder endpoint
 
 #### Verifications (Execution Client)
@@ -102,6 +103,7 @@ building payloads with invalid parent beacon block root.
 - Deneb/Cancun transition occurs on Epoch 1 or 5
 	- Epoch depends on whether builder workflow activation requires finalization [on the CL client](#clients-that-require-finalization-to-enable-builder).
 - Builder is enabled for all nodes
+- Builder action is only enabled after fork
 - Nodes have the mock-builder configured as builder endpoint
 
 #### Verifications (Execution Client)
@@ -152,6 +154,7 @@ returning error on header request after deneb transition.
 - Deneb/Cancun transition occurs on Epoch 1 or 5
 	- Epoch depends on whether builder workflow activation requires finalization [on the CL client](#clients-that-require-finalization-to-enable-builder).
 - Builder is enabled for all nodes
+- Builder action is only enabled after fork
 - Nodes have the mock-builder configured as builder endpoint
 
 #### Verifications (Execution Client)
@@ -203,6 +206,7 @@ returning error on unblinded payload request after deneb transition.
 - Deneb/Cancun transition occurs on Epoch 1 or 5
 	- Epoch depends on whether builder workflow activation requires finalization [on the CL client](#clients-that-require-finalization-to-enable-builder).
 - Builder is enabled for all nodes
+- Builder action is only enabled after fork
 - Nodes have the mock-builder configured as builder endpoint
 
 #### Verifications (Execution Client)
@@ -253,6 +257,7 @@ version is outdated (capella instead of deneb).
 - Deneb/Cancun transition occurs on Epoch 1 or 5
 	- Epoch depends on whether builder workflow activation requires finalization [on the CL client](#clients-that-require-finalization-to-enable-builder).
 - Builder is enabled for all nodes
+- Builder action is only enabled after fork
 - Nodes have the mock-builder configured as builder endpoint
 
 #### Verifications (Execution Client)
@@ -309,6 +314,7 @@ produced locally and results in an empty slot.
 - Deneb/Cancun transition occurs on Epoch 1 or 5
 	- Epoch depends on whether builder workflow activation requires finalization [on the CL client](#clients-that-require-finalization-to-enable-builder).
 - Builder is enabled for all nodes
+- Builder action is only enabled after fork
 - Nodes have the mock-builder configured as builder endpoint
 
 #### Verifications (Execution Client)
