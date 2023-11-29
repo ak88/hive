@@ -105,6 +105,7 @@ func (ts BuilderTestSpec) GetDescription() *helper.Description {
 	- Deneb/Cancun transition occurs on Epoch 1 or 5
 		- Epoch depends on whether builder workflow activation requires finalization [on the CL client](#clients-that-require-finalization-to-enable-builder).
 	- Builder is enabled for all nodes
+	- Builder action is only enabled after fork
 	- Nodes have the mock-builder configured as builder endpoint`)
 	desc.Add(helper.CategoryVerificationsConsensusClient, `
 	- Verify that the builder, up to before Deneb fork, has been able to produce blocks and they have been included in the canonical chain`)
