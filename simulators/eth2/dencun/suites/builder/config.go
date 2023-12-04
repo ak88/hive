@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/hive/simulators/eth2/common/clients"
 	"github.com/ethereum/hive/simulators/eth2/common/testnet"
-	"github.com/ethereum/hive/simulators/eth2/dencun/helper"
+	"github.com/ethereum/hive/simulators/eth2/common/utils"
 	suite_base "github.com/ethereum/hive/simulators/eth2/dencun/suites/base"
 	mock_builder "github.com/marioevz/mock-builder/mock"
 	beacon "github.com/protolambda/zrnt/eth2/beacon/common"
@@ -99,25 +99,25 @@ func (ts BuilderTestSpec) GetTestnetConfig(
 	return tc
 }
 
-func (ts BuilderTestSpec) GetDescription() *helper.Description {
+func (ts BuilderTestSpec) GetDescription() *utils.Description {
 	desc := ts.BaseTestSpec.GetDescription()
-	desc.Add(helper.CategoryTestnetConfiguration, `
+	desc.Add(utils.CategoryTestnetConfiguration, `
 	- Deneb/Cancun transition occurs on Epoch 1 or 5
 		- Epoch depends on whether builder workflow activation requires finalization [on the CL client](#clients-that-require-finalization-to-enable-builder).
 	- Builder is enabled for all nodes
 	- Builder action is only enabled after fork
 	- Nodes have the mock-builder configured as builder endpoint`)
-	desc.Add(helper.CategoryVerificationsConsensusClient, `
+	desc.Add(utils.CategoryVerificationsConsensusClient, `
 	- Verify that the builder, up to before Deneb fork, has been able to produce blocks and they have been included in the canonical chain`)
 	if ts.InvalidPayloadCaughtBeforeReveal() {
-		desc.Add(helper.CategoryVerificationsConsensusClient, fmt.Sprintf(`
+		desc.Add(utils.CategoryVerificationsConsensusClient, fmt.Sprintf(`
 	- After Deneb fork, the builder must be able to include blocks with blobs in the canonical chain, which implicitly verifies:
 		- Consensus client is able to properly format header requests to the builder
 		- Consensus client is able to properly format blinded signed requests to the builder
 		- No signed block contained an invalid format or signature
 	- There are no more than %d missed slots on the latest epoch`, MAX_MISSED_SLOTS_NO_CIRCUIT_BREAKER))
 	} else {
-		desc.Add(helper.CategoryVerificationsConsensusClient, fmt.Sprintf(`
+		desc.Add(utils.CategoryVerificationsConsensusClient, fmt.Sprintf(`
 		- Circuit breaker correctly kicks in and disables the builder workflow
 			- Implicitly verified by missed-slot count
 		- Builder workflow is re-enabled after the circuit breaker timeout

@@ -12,7 +12,7 @@ import (
 	cl "github.com/ethereum/hive/simulators/eth2/common/config/consensus"
 	el "github.com/ethereum/hive/simulators/eth2/common/config/execution"
 	"github.com/ethereum/hive/simulators/eth2/common/testnet"
-	"github.com/ethereum/hive/simulators/eth2/dencun/helper"
+	"github.com/ethereum/hive/simulators/eth2/common/utils"
 	"github.com/ethereum/hive/simulators/ethereum/engine/globals"
 	beacon "github.com/protolambda/zrnt/eth2/beacon/common"
 )
@@ -36,6 +36,9 @@ type BaseTestSpec struct {
 	GenesisExecutionWithdrawalCredentialsShares int
 	GenesisExitedShares                         int
 	GenesisSlashedShares                        int
+
+	// Actions
+	ExitValidatorsShare int
 
 	// Verifications
 	EpochsAfterFork beacon.Epoch
@@ -152,11 +155,11 @@ func (ts BaseTestSpec) GetDisplayName() string {
 	return ts.DisplayName
 }
 
-func (ts BaseTestSpec) GetDescription() *helper.Description {
-	desc := helper.NewDescription(ts.Description)
+func (ts BaseTestSpec) GetDescription() *utils.Description {
+	desc := utils.NewDescription(ts.Description)
 
 	// Add the testnet config description
-	desc.Add(helper.CategoryTestnetConfiguration, fmt.Sprintf(`
+	desc.Add(utils.CategoryTestnetConfiguration, fmt.Sprintf(`
 	  - Node Count: %d
 	  - Validating Node Count: %d
 	  - Validator Key Count: %d
@@ -167,13 +170,13 @@ func (ts BaseTestSpec) GetDescription() *helper.Description {
 		ts.GetValidatorCount()/uint64(ts.GetValidatingNodeCount()),
 	))
 	if ts.DenebGenesis {
-		desc.Add(helper.CategoryTestnetConfiguration, "- Genesis Fork: Deneb")
+		desc.Add(utils.CategoryTestnetConfiguration, "- Genesis Fork: Deneb")
 	} else {
-		desc.Add(helper.CategoryTestnetConfiguration, "- Genesis Fork: Capella")
+		desc.Add(utils.CategoryTestnetConfiguration, "- Genesis Fork: Capella")
 	}
 	execCredentialCount := ts.GetExecutionWithdrawalCredentialCount()
 	blsCredentialCount := ts.GetValidatorCount() - execCredentialCount
-	desc.Add(helper.CategoryTestnetConfiguration, fmt.Sprintf(`
+	desc.Add(utils.CategoryTestnetConfiguration, fmt.Sprintf(`
 	  - Execution Withdrawal Credentials Count: %d
 	  - BLS Withdrawal Credentials Count: %d`,
 		execCredentialCount,
@@ -181,13 +184,13 @@ func (ts BaseTestSpec) GetDescription() *helper.Description {
 	))
 
 	// Add the verifications description
-	desc.Add(helper.CategoryVerificationsExecutionClient, `
+	desc.Add(utils.CategoryVerificationsExecutionClient, `
 	  - Blob (type-3) transactions are included in the blocks`)
-	desc.Add(helper.CategoryVerificationsConsensusClient, `
+	desc.Add(utils.CategoryVerificationsConsensusClient, `
 	  - For each blob transaction on the execution chain, the blob sidecars are available for the beacon block at the same height
 	  - The beacon block lists the correct commitments for each blob`)
 	if ts.WaitForFinality {
-		desc.Add(helper.CategoryVerificationsConsensusClient, `
+		desc.Add(utils.CategoryVerificationsConsensusClient, `
 		- After all other verifications are done, the beacon chain is able to finalize the current epoch`)
 	}
 
@@ -210,12 +213,11 @@ func (ts BaseTestSpec) GetExecutionWithdrawalCredentialCount() uint64 {
 
 func (ts BaseTestSpec) GetValidatorKeys(
 	mnemonic string,
-) []*cl.ValidatorDetails {
+) cl.ValidatorsSetupDetails {
 	keySrc := &cl.MnemonicsKeySource{
-		From:       0,
-		To:         ts.GetValidatorCount(),
-		Validator:  mnemonic,
-		Withdrawal: mnemonic,
+		From:     0,
+		To:       ts.GetValidatorCount(),
+		Mnemonic: mnemonic,
 	}
 	keys, err := keySrc.Keys()
 	if err != nil {

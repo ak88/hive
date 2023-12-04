@@ -14,21 +14,6 @@ import (
 	"github.com/protolambda/ztyp/tree"
 )
 
-func createValidators(
-	spec *common.Spec,
-	keys []*consensus_config.ValidatorDetails,
-) []phase0.KickstartValidatorData {
-	validators := make([]phase0.KickstartValidatorData, 0, len(keys))
-	for _, key := range keys {
-		validators = append(validators, phase0.KickstartValidatorData{
-			Pubkey:                key.ValidatorPubkey,
-			WithdrawalCredentials: key.WithdrawalCredentials(),
-			Balance:               spec.MAX_EFFECTIVE_BALANCE + key.ExtraInitialBalance,
-		})
-	}
-	return validators
-}
-
 // BuildBeaconState creates a beacon state, with either ExecutionFromGenesis or NoExecutionFromGenesis, the given timestamp, and validators derived from the given keys.
 // The deposit contract will be recognized as an empty tree, ready for new deposits, thus skipping any transactions for pre-mined validators.
 //
@@ -37,7 +22,7 @@ func BuildBeaconState(
 	spec *common.Spec,
 	executionGenesis *types.Block,
 	beaconGenesisTime common.Timestamp,
-	keys []*consensus_config.ValidatorDetails,
+	keys consensus_config.ValidatorsSetupDetails,
 ) (common.BeaconState, error) {
 	if uint64(len(keys)) < uint64(spec.MIN_GENESIS_ACTIVE_VALIDATOR_COUNT) {
 		return nil, fmt.Errorf(
@@ -48,8 +33,6 @@ func BuildBeaconState(
 	}
 
 	eth1BlockHash := common.Root(executionGenesis.Hash())
-
-	validators := createValidators(spec, keys)
 
 	var state interfaces.StateViewGenesis
 	if spec.DENEB_FORK_EPOCH == 0 {
@@ -97,57 +80,13 @@ func BuildBeaconState(
 		return nil, err
 	}
 
-	for _, v := range validators {
-		if err := state.AddValidator(spec, v.Pubkey, v.WithdrawalCredentials, v.Balance); err != nil {
-			return nil, err
-		}
+	if err := keys.AddToGenesisState(spec, state); err != nil {
+		return nil, err
 	}
+
 	vals, err := state.Validators()
 	if err != nil {
 		return nil, err
-	}
-	// Process activations and exits
-	for i := 0; i < len(validators); i++ {
-		val, err := vals.Validator(common.ValidatorIndex(i))
-		if err != nil {
-			return nil, err
-		}
-		vEff, err := val.EffectiveBalance()
-		if err != nil {
-			return nil, err
-		}
-		if vEff == spec.MAX_EFFECTIVE_BALANCE {
-			if err := val.SetActivationEligibilityEpoch(common.GENESIS_EPOCH); err != nil {
-				return nil, err
-			}
-			if err := val.SetActivationEpoch(common.GENESIS_EPOCH); err != nil {
-				return nil, err
-			}
-		}
-		// Process exits/slashings
-		slashings, err := state.Slashings()
-		if err != nil {
-			return nil, err
-		}
-		if keys[i].Exited || keys[i].Slashed {
-			exit_epoch := common.GENESIS_EPOCH
-			val.SetExitEpoch(exit_epoch)
-			val.SetWithdrawableEpoch(
-				exit_epoch + spec.MIN_VALIDATOR_WITHDRAWABILITY_DELAY,
-			)
-			if keys[i].Slashed {
-				val.MakeSlashed()
-
-				bal, err := val.EffectiveBalance()
-				if err != nil {
-					return nil, err
-				}
-
-				if err := slashings.AddSlashing(exit_epoch, bal); err != nil {
-					return nil, err
-				}
-			}
-		}
 	}
 
 	if err := state.SetGenesisValidatorsRoot(vals.HashTreeRoot(tree.GetHashFn())); err != nil {

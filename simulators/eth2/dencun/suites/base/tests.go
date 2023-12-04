@@ -23,7 +23,8 @@ func init() {
 			Description:  `Sanity test to check the fork transition to deneb.`,
 			DenebGenesis: false,
 			GenesisExecutionWithdrawalCredentialsShares: 1,
-			EpochsAfterFork: 1,
+			EpochsAfterFork:     1,
+			ExitValidatorsShare: 10,
 		},
 		BaseTestSpec{
 			Name:        "test-deneb-genesis",
@@ -33,7 +34,8 @@ func init() {
 			`,
 			DenebGenesis: true,
 			GenesisExecutionWithdrawalCredentialsShares: 1,
-			WaitForFinality: true,
+			WaitForFinality:     true,
+			ExitValidatorsShare: 10,
 		},
 	)
 }

@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	blsu "github.com/protolambda/bls12-381-util"
-
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/protolambda/zrnt/eth2/beacon"
 	"github.com/protolambda/zrnt/eth2/beacon/common"
@@ -23,6 +21,7 @@ import (
 	cl "github.com/ethereum/hive/simulators/eth2/common/config/consensus"
 	cl_genesis "github.com/ethereum/hive/simulators/eth2/common/config/consensus/genesis"
 	el "github.com/ethereum/hive/simulators/eth2/common/config/execution"
+	"github.com/ethereum/hive/simulators/eth2/common/utils"
 	beacon_client "github.com/marioevz/eth-clients/clients/beacon"
 	exec_client "github.com/marioevz/eth-clients/clients/execution"
 	validator_client "github.com/marioevz/eth-clients/clients/validator"
@@ -45,15 +44,14 @@ func init() {
 // PreparedTestnet has all the options for starting nodes, ready to build the network.
 type PreparedTestnet struct {
 	// Consensus chain configuration
-	spec *common.Spec
+	Spec *common.Spec
 
 	// Execution chain configuration and genesis info
-	executionGenesis *el.ExecutionGenesis
+	ExecutionGenesis *el.ExecutionGenesis
 	// Consensus genesis state
-	eth2Genesis common.BeaconState
-	// Secret keys of validators, to fabricate extra signed test messages with during testnet/
-	// E.g. to test a slashable offence that would not otherwise happen.
-	keys *[]blsu.SecretKey
+	BeaconGenesis common.BeaconState
+
+	ValidatorsSetupDetails cl.ValidatorsSetupDetails
 
 	// Configuration to apply to every node of the given type
 	executionOpts hivesim.StartOption
@@ -61,7 +59,7 @@ type PreparedTestnet struct {
 	beaconOpts    hivesim.StartOption
 
 	// A tranche is a group of validator keys to run on 1 node
-	keyTranches []cl.ValidatorDetailsMap
+	keyTranches []cl.ValidatorsKeys
 }
 
 func getLogLevelString() string {
@@ -80,7 +78,7 @@ func getLogLevelString() string {
 }
 
 // Build all artifacts require to start a testnet.
-func prepareTestnet(
+func PrepareTestnet(
 	env *Environment,
 	config *Config,
 ) (*PreparedTestnet, error) {
@@ -172,7 +170,7 @@ func prepareTestnet(
 	if config.ExtraShares != nil {
 		shares = append(shares, config.ExtraShares.Uint64())
 	}
-	keyTranches := cl.KeyTranches(env.Keys, shares)
+	keyTranches := env.Validators.KeyTranches(shares)
 
 	consensusConfigOpts, err := cl.ConsensusConfigsBundle(
 		spec,
@@ -197,7 +195,7 @@ func prepareTestnet(
 		spec,
 		executionGenesis.Block,
 		genesisTime,
-		env.Keys,
+		env.Validators,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error producing beacon genesis state: %v", err)
@@ -296,27 +294,34 @@ func prepareTestnet(
 	)
 
 	return &PreparedTestnet{
-		spec:             spec,
-		executionGenesis: executionGenesis,
-		eth2Genesis:      state,
-		keys:             env.Secrets,
-		executionOpts:    executionOpts,
-		beaconOpts:       beaconOpts,
-		validatorOpts:    validatorOpts,
-		keyTranches:      keyTranches,
+		Spec:                   spec,
+		ExecutionGenesis:       executionGenesis,
+		BeaconGenesis:          state,
+		ValidatorsSetupDetails: env.Validators,
+		executionOpts:          executionOpts,
+		beaconOpts:             beaconOpts,
+		validatorOpts:          validatorOpts,
+		keyTranches:            keyTranches,
 	}, nil
 }
 
 func (p *PreparedTestnet) createTestnet(t *hivesim.T) *Testnet {
-	genesisTime, _ := p.eth2Genesis.GenesisTime()
-	genesisValidatorsRoot, _ := p.eth2Genesis.GenesisValidatorsRoot()
+	genesisTime, _ := p.BeaconGenesis.GenesisTime()
+	genesisValidatorsRoot, _ := p.BeaconGenesis.GenesisValidatorsRoot()
+	validators, err := utils.NewValidators(p.Spec, p.BeaconGenesis, p.ValidatorsSetupDetails.KeysMap(0))
+	if err != nil {
+		panic(err)
+	}
 	return &Testnet{
 		T:                     t,
 		genesisTime:           genesisTime,
 		genesisValidatorsRoot: genesisValidatorsRoot,
-		spec:                  p.spec,
-		executionGenesis:      p.executionGenesis,
-		eth2GenesisState:      p.eth2Genesis,
+		spec:                  p.Spec,
+		executionGenesis:      p.ExecutionGenesis,
+		eth2GenesisState:      p.BeaconGenesis,
+
+		Validators:      validators,
+		ValidatorGroups: make(map[string]*utils.Validators),
 
 		// Testing
 		maxConsecutiveErrorsOnWaits: DEFAULT_MAX_CONSECUTIVE_ERRORS_ON_WAITS,
@@ -463,7 +468,7 @@ func (p *PreparedTestnet) prepareBeaconNode(
 			),
 			mock_builder.WithID(config.ClientIndex),
 			mock_builder.WithBeaconGenesisTime(testnet.genesisTime),
-			mock_builder.WithSpec(p.spec),
+			mock_builder.WithSpec(p.Spec),
 			mock_builder.WithLogLevel(getLogLevelString()),
 		}
 
@@ -646,8 +651,7 @@ func (p *PreparedTestnet) prepareValidatorClient(
 				fmt.Sprintf("%d", p.Port()),
 			)
 		}
-		keysOpt := cl.KeysBundle(keys)
-		opts := []hivesim.StartOption{p.validatorOpts, keysOpt, bnAPIOpt}
+		opts := []hivesim.StartOption{p.validatorOpts, keys.Bundle(), bnAPIOpt}
 
 		if bn.Builder != nil {
 			if builder, ok := bn.Builder.(builder_types.Builder); ok {
@@ -668,7 +672,7 @@ func (p *PreparedTestnet) prepareValidatorClient(
 		Client:       cm,
 		Logger:       testnet.T,
 		ClientIndex:  keyIndex,
-		Keys:         keys.Keys(),
+		Keys:         keys,
 		BeaconClient: bn,
 	}
 }

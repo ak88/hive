@@ -65,6 +65,10 @@ type Testnet struct {
 
 	// Test configuration
 	maxConsecutiveErrorsOnWaits int
+
+	// Validators
+	Validators      *utils.Validators
+	ValidatorGroups map[string]*utils.Validators
 }
 
 type ActiveSpec struct {
@@ -155,7 +159,7 @@ func StartTestnet(
 	env *Environment,
 	config *Config,
 ) *Testnet {
-	prep, err := prepareTestnet(env, config)
+	prep, err := PrepareTestnet(env, config)
 	if err != nil {
 		t.Fatalf("FAIL: Unable to prepare testnet: %v", err)
 	}
@@ -189,7 +193,7 @@ func StartTestnet(
 
 	if config.EnableBlobber {
 		blobberKeys := make([]*keys.ValidatorKey, 0)
-		for _, key := range env.Keys {
+		for _, key := range env.Validators {
 			validator := new(keys.ValidatorKey)
 			validator.FromBytes(key.ValidatorSecretKey[:])
 			blobberKeys = append(blobberKeys, validator)
@@ -198,7 +202,7 @@ func StartTestnet(
 		blobberOpts := []blobber_config.Option{
 			blobber_config.WithExternalIP(simulatorIP),
 			blobber_config.WithBeaconGenesisTime(testnet.genesisTime),
-			blobber_config.WithSpec(prep.spec),
+			blobber_config.WithSpec(prep.Spec),
 			blobber_config.WithValidatorKeysList(blobberKeys),
 			blobber_config.WithGenesisValidatorsRoot(testnet.genesisValidatorsRoot),
 			blobber_config.WithLogLevel(getLogLevelString()),

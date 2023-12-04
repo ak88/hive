@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/hive/simulators/eth2/common/clients"
 	consensus_config "github.com/ethereum/hive/simulators/eth2/common/config/consensus"
 	"github.com/ethereum/hive/simulators/eth2/common/testnet"
-	"github.com/ethereum/hive/simulators/eth2/dencun/helper"
+	"github.com/ethereum/hive/simulators/eth2/common/utils"
 	beacon "github.com/protolambda/zrnt/eth2/beacon/common"
 )
 
@@ -19,12 +19,12 @@ type TestSpec interface {
 	GetName() string
 	GetTestnetConfig(clients.NodeDefinitions) *testnet.Config
 	GetDisplayName() string
-	GetDescription() *helper.Description
+	GetDescription() *utils.Description
 	ExecutePreFork(*hivesim.T, context.Context, *testnet.Testnet, *testnet.Environment, *testnet.Config)
 	ExecutePostFork(*hivesim.T, context.Context, *testnet.Testnet, *testnet.Environment, *testnet.Config)
 	ExecutePostForkWait(*hivesim.T, context.Context, *testnet.Testnet, *testnet.Environment, *testnet.Config)
 	Verify(*hivesim.T, context.Context, *testnet.Testnet, *testnet.Environment, *testnet.Config)
-	GetValidatorKeys(string) []*consensus_config.ValidatorDetails
+	GetValidatorKeys(string) consensus_config.ValidatorsSetupDetails
 }
 
 // Add all tests to the suite
@@ -50,14 +50,9 @@ func SuiteHydrate(
 				t.Logf("Starting test: %s", test.GetName())
 				defer t.Logf("Finished test: %s", test.GetName())
 				keys := test.GetValidatorKeys(mnemonic)
-				secrets, err := consensus_config.SecretKeys(keys)
-				if err != nil {
-					panic(err)
-				}
 				env := &testnet.Environment{
-					Clients: c,
-					Keys:    keys,
-					Secrets: secrets,
+					Clients:    c,
+					Validators: keys,
 				}
 				config := test.GetTestnetConfig(clientCombinations)
 

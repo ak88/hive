@@ -1,4 +1,5 @@
-package helper
+// Test description struct and methods to add items to the description
+package utils
 
 import (
 	"fmt"

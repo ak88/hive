@@ -2,13 +2,14 @@ package suite_base
 
 import (
 	"context"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/hive/hivesim"
-	"github.com/ethereum/hive/simulators/eth2/dencun/helper"
 
 	beacon_verification "github.com/ethereum/hive/simulators/eth2/common/spoofing/beacon"
 	tn "github.com/ethereum/hive/simulators/eth2/common/testnet"
+	"github.com/ethereum/hive/simulators/eth2/common/utils"
 	"github.com/ethereum/hive/simulators/ethereum/engine/globals"
 	engine_helper "github.com/ethereum/hive/simulators/ethereum/engine/helper"
 	"github.com/protolambda/eth2api"
@@ -22,6 +23,10 @@ var (
 	blobTxAccounts   = globals.TestAccounts[len(globals.TestAccounts)/2:]
 )
 
+func WithdrawalAddress(vI beacon.ValidatorIndex) common.Address {
+	return common.Address{byte(vI + 0x100)}
+}
+
 // Generic Deneb test routine, capable of running most of the test
 // scenarios.
 func (ts BaseTestSpec) ExecutePreFork(
@@ -32,7 +37,7 @@ func (ts BaseTestSpec) ExecutePreFork(
 	config *tn.Config,
 ) {
 	// Setup the transaction spammers, both normal and blob transactions
-	normalTxSpammer := helper.TransactionSpammer{
+	normalTxSpammer := utils.TransactionSpammer{
 		T:                        t,
 		Name:                     "normal",
 		Recipient:                &CodeContractAddress,
@@ -84,7 +89,7 @@ func (ts BaseTestSpec) ExecutePostFork(
 	testnet.WaitSlots(ctx, 1)
 
 	// Start sending blob transactions from dedicated accounts
-	blobTxSpammer := helper.TransactionSpammer{
+	blobTxSpammer := utils.TransactionSpammer{
 		T:                        t,
 		Name:                     "blobs",
 		Recipient:                &CodeContractAddress,
@@ -98,34 +103,72 @@ func (ts BaseTestSpec) ExecutePostFork(
 	go blobTxSpammer.Run(ctx)
 
 	// Send BLSToExecutionChanges messages during Deneb for all validators on BLS credentials
-	allValidators, err := helper.ValidatorsFromBeaconState(
-		testnet.GenesisBeaconState(),
-		*testnet.Spec().Spec,
-		env.Keys,
-	)
-	if err != nil {
-		t.Fatalf("FAIL: Error parsing validators from beacon state")
-	}
-	nonWithdrawableValidators := allValidators.NonWithdrawable()
-	if len(nonWithdrawableValidators) > 0 {
+	nonWithdrawableValidators := testnet.Validators.NonWithdrawable()
+	testnet.ValidatorGroups["nonWithdrawable"] = nonWithdrawableValidators
+	if nonWithdrawableValidators.Count() > 0 {
 		beaconClients := testnet.BeaconClients().Running()
-		for i := 0; i < len(nonWithdrawableValidators); i++ {
+		domainType := beacon.DOMAIN_BLS_TO_EXECUTION_CHANGE
+		forkVersion := testnet.Spec().GENESIS_FORK_VERSION
+		validatorsRoot := testnet.GenesisValidatorsRoot()
+		domain := beacon.ComputeDomain(
+			domainType,
+			forkVersion,
+			validatorsRoot,
+		)
+		t.Logf("INFO: BLS to execution domain=%s, domain type = %s, fork version = %s, validators root = %s", domain.String(), domainType.String(), forkVersion.String(), validatorsRoot.String())
+		i := 0
+		nonWithdrawableValidators.ForEach(func(v *utils.Validator) {
 			b := beaconClients[i%len(beaconClients)]
-			v := nonWithdrawableValidators[i]
 			if err := v.SignSendBLSToExecutionChange(
 				ctx,
 				b,
-				common.Address{byte(v.Index + 0x100)},
-				helper.ComputeBLSToExecutionDomain(testnet),
+				WithdrawalAddress(v.Index),
+				domain,
 			); err != nil {
 				t.Fatalf(
 					"FAIL: Unable to submit bls-to-execution changes: %v",
 					err,
 				)
 			}
-		}
+			i++
+		})
+		t.Logf("INFO: sent bls-to-execution changes of %d validators", i)
 	} else {
 		t.Logf("INFO: no validators left on BLS credentials")
+	}
+
+	// Send exit messages for the share of validators that will exit
+	// at the fork
+	if ts.ExitValidatorsShare > 0 {
+		// Get the validators that will exit
+		exitValidators := testnet.Validators.Chunks(ts.ExitValidatorsShare)[0]
+		testnet.ValidatorGroups["toExit"] = exitValidators
+		if exitValidators.Count() > 0 {
+			beaconClients := testnet.BeaconClients().Running()
+			domain := beacon.ComputeDomain(
+				beacon.DOMAIN_VOLUNTARY_EXIT,
+				testnet.Spec().CAPELLA_FORK_VERSION,
+				testnet.GenesisValidatorsRoot(),
+			)
+			i := 0
+			exitValidators.ForEach(func(v *utils.Validator) {
+				b := beaconClients[i%len(beaconClients)]
+				if err := v.SignSendVoluntaryExit(
+					ctx,
+					b,
+					domain,
+				); err != nil {
+					t.Fatalf(
+						"FAIL: Unable to submit exit: %v",
+						err,
+					)
+				}
+				i++
+			})
+
+		} else {
+			t.Logf("INFO: no validators to exit")
+		}
 	}
 }
 
@@ -174,6 +217,77 @@ func (ts BaseTestSpec) Verify(
 			)
 		} else if err != nil {
 			t.Fatalf("FAIL: error querying optimistic state on client %d (%s): %v", i, n.ClientNames(), err)
+		}
+	}
+
+	// Check non-withdrawable validators changed their credentials
+	nonWithdrawableValidators := testnet.ValidatorGroups["nonWithdrawable"]
+	if nonWithdrawableValidators != nil && nonWithdrawableValidators.Count() > 0 {
+		for {
+			select {
+			case <-time.After(time.Duration(testnet.Spec().SECONDS_PER_SLOT) * time.Second):
+			case <-ctx.Done():
+				t.Fatalf("FAIL: context expired waiting for non-withdrawable validators to change credentials")
+			}
+			// Update the validator set from state
+			state, err := testnet.BeaconClients().Running()[0].BeaconStateV2(ctx, eth2api.StateHead)
+			if err != nil {
+				t.Fatalf("FAIL: error getting beacon state: %v", err)
+			}
+
+			beaconState, err := state.Tree(testnet.Spec().Spec)
+			if err != nil {
+				t.Fatalf("FAIL: error getting beacon state tree: %v", err)
+			}
+
+			nonWithdrawableValidators.UpdateFromBeaconState(beaconState)
+
+			// Check if all validators have changed their credentials
+			if nonWithdrawableValidators.NonWithdrawable().Count() == 0 {
+				t.Logf("INFO: all non-withdrawable validators have changed credentials")
+				break
+			} else {
+				t.Logf(
+					"INFO: %d non-withdrawable validators have not changed credentials",
+					nonWithdrawableValidators.NonWithdrawable().Count(),
+				)
+			}
+		}
+	}
+
+	toExitValidators := testnet.ValidatorGroups["toExit"]
+	if toExitValidators != nil && toExitValidators.Count() > 0 {
+		toExitValidatorsCount := toExitValidators.Count()
+		for {
+			select {
+			case <-time.After(time.Duration(testnet.Spec().SECONDS_PER_SLOT) * time.Second):
+			case <-ctx.Done():
+				t.Fatalf("FAIL: context expired waiting for validators to exit")
+			}
+			// Update the validator set from state
+			state, err := testnet.BeaconClients().Running()[0].BeaconStateV2(ctx, eth2api.StateHead)
+			if err != nil {
+				t.Fatalf("FAIL: error getting beacon state: %v", err)
+			}
+
+			beaconState, err := state.Tree(testnet.Spec().Spec)
+			if err != nil {
+				t.Fatalf("FAIL: error getting beacon state tree: %v", err)
+			}
+
+			toExitValidators.UpdateFromBeaconState(beaconState)
+
+			// Check if all validators have initiated exit
+			exitInitiatedCount := toExitValidators.ExitInitiated().Count()
+			if exitInitiatedCount == toExitValidatorsCount {
+				t.Logf("INFO: all validators have initiated exit")
+				break
+			} else {
+				t.Logf(
+					"INFO: %d validators have not initiated exit",
+					toExitValidatorsCount-exitInitiatedCount,
+				)
+			}
 		}
 	}
 
