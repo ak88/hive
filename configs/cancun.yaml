@@ -51,12 +51,12 @@
   nametag: deneb
   build_args:
       baseimage: ethpandaops/prysm
-      tag: devnet-10-linux-amd64
+      tag: develop-linux-amd64
 - client: prysm-vc
   nametag: deneb
   build_args:
       baseimage: ethpandaops/prysm-validator
-      tag: devnet-10-linux-amd64
+      tag: develop-linux-amd64
 
 - client: lighthouse-bn
   nametag: deneb
