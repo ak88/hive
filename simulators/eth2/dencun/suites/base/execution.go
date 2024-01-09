@@ -220,14 +220,18 @@ func (ts BaseTestSpec) Verify(
 		}
 	}
 
+	// Set timeout for the following checks
+	timeoutCtx, cancel := testnet.Spec().EpochTimeoutContext(ctx, 2)
+	defer cancel()
+
 	// Check non-withdrawable validators changed their credentials
 	nonWithdrawableValidators := testnet.ValidatorGroups["nonWithdrawable"]
 	if nonWithdrawableValidators != nil && nonWithdrawableValidators.Count() > 0 {
 		for {
 			select {
 			case <-time.After(time.Duration(testnet.Spec().SECONDS_PER_SLOT) * time.Second):
-			case <-ctx.Done():
-				t.Fatalf("FAIL: context expired waiting for non-withdrawable validators to change credentials")
+			case <-timeoutCtx.Done():
+				t.Fatalf("FAIL: context expired waiting for non-withdrawable validators to change credentials: %v", timeoutCtx.Err())
 			}
 			// Update the validator set from state
 			state, err := testnet.BeaconClients().Running()[0].BeaconStateV2(ctx, eth2api.StateHead)
@@ -255,14 +259,15 @@ func (ts BaseTestSpec) Verify(
 		}
 	}
 
+	// Check exit validators have an exit epoch set
 	toExitValidators := testnet.ValidatorGroups["toExit"]
 	if toExitValidators != nil && toExitValidators.Count() > 0 {
 		toExitValidatorsCount := toExitValidators.Count()
 		for {
 			select {
 			case <-time.After(time.Duration(testnet.Spec().SECONDS_PER_SLOT) * time.Second):
-			case <-ctx.Done():
-				t.Fatalf("FAIL: context expired waiting for validators to exit")
+			case <-timeoutCtx.Done():
+				t.Fatalf("FAIL: context expired waiting for validators to exit: %v", timeoutCtx.Err())
 			}
 			// Update the validator set from state
 			state, err := testnet.BeaconClients().Running()[0].BeaconStateV2(ctx, eth2api.StateHead)
