@@ -62,23 +62,23 @@
   nametag: deneb
   build_args:
       baseimage: ethpandaops/lighthouse
-      tag: sidecar-inclusion-proof
+      tag: unstable-linux-amd64
 - client: lighthouse-vc
   nametag: deneb
   build_args:
       baseimage: ethpandaops/lighthouse
-      tag: sidecar-inclusion-proof
+      tag: unstable-linux-amd64
 
 - client: lodestar-bn
   nametag: deneb
   build_args:
       baseimage: ethpandaops/lodestar
-      tag: blobs-inclproof
+      tag: unstable-linux-amd64
 - client: lodestar-vc
   nametag: deneb
   build_args:
       baseimage: ethpandaops/lodestar
-      tag: blobs-inclproof
+      tag: unstable-linux-amd64
 
 - client: nimbus-bn
 - client: nimbus-vc
