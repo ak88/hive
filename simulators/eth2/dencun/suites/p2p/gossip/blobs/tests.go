@@ -5,7 +5,7 @@ import (
 	"github.com/ethereum/hive/simulators/eth2/common/clients"
 	"github.com/ethereum/hive/simulators/eth2/dencun/suites"
 	suite_base "github.com/ethereum/hive/simulators/eth2/dencun/suites/base"
-	blobber_slot_actions "github.com/marioevz/blobber/slot_actions"
+	bpa "github.com/marioevz/blobber/proposal_actions"
 )
 
 var testSuite = hivesim.Suite{
@@ -20,7 +20,7 @@ var Tests = make([]suites.TestSpec, 0)
 func init() {
 	Tests = append(Tests,
 		P2PBlobsGossipTestSpec{
-			BlobberSlotAction: blobber_slot_actions.Default{},
+			BlobberProposalAction: bpa.ConfigureProposalAction(bpa.Default{}, nil),
 			BaseTestSpec: suite_base.BaseTestSpec{
 				Name:        "blob-gossiping-sanity",
 				DisplayName: "Blob Gossiping Sanity",
@@ -32,9 +32,11 @@ func init() {
 			},
 		},
 		P2PBlobsGossipTestSpec{
-			BlobberSlotAction: blobber_slot_actions.Default{
-				BroadcastBlobsFirst: true,
-			},
+			BlobberProposalAction: bpa.ConfigureProposalAction(
+				bpa.Default{
+					BroadcastBlobsFirst: true,
+				},
+				nil),
 			BaseTestSpec: suite_base.BaseTestSpec{
 				Name:        "blob-gossiping-before-block",
 				DisplayName: "Blob Gossiping Before Block",
@@ -46,9 +48,10 @@ func init() {
 			},
 		},
 		P2PBlobsGossipTestSpec{
-			BlobberSlotAction: blobber_slot_actions.BlobGossipDelay{
-				DelayMilliseconds: 500,
-			},
+			BlobberProposalAction: bpa.ConfigureProposalAction(
+				bpa.BlobGossipDelay{
+					DelayMilliseconds: 500,
+				}, nil),
 			BaseTestSpec: suite_base.BaseTestSpec{
 				Name:        "blob-gossiping-delay",
 				DisplayName: "Blob Gossiping Delay",
@@ -60,9 +63,11 @@ func init() {
 			},
 		},
 		P2PBlobsGossipTestSpec{
-			BlobberSlotAction: blobber_slot_actions.BlobGossipDelay{
-				DelayMilliseconds: 6000,
-			},
+			BlobberProposalAction: bpa.ConfigureProposalAction(
+				bpa.BlobGossipDelay{
+					DelayMilliseconds: 6000,
+				},
+				nil),
 			BaseTestSpec: suite_base.BaseTestSpec{
 				Name:        "blob-gossiping-one-slot-delay",
 				DisplayName: "Blob Gossiping One-Slot Delay",
@@ -76,7 +81,10 @@ func init() {
 			BlobberActionCausesMissedSlot: true,
 		},
 		P2PBlobsGossipTestSpec{
-			BlobberSlotAction: blobber_slot_actions.InvalidEquivocatingBlock{},
+			BlobberProposalAction: bpa.ConfigureProposalAction(
+				bpa.InvalidEquivocatingBlock{},
+				nil,
+			),
 			BaseTestSpec: suite_base.BaseTestSpec{
 				Name:        "invalid-equivocating-block",
 				DisplayName: "Invalid Equivocating Block",
@@ -98,9 +106,14 @@ func init() {
 			BlobberActionCausesMissedSlot: true,
 		},
 		P2PBlobsGossipTestSpec{
-			BlobberSlotAction: blobber_slot_actions.EquivocatingBlockAndBlobs{
-				BroadcastBlobsFirst: true,
-			},
+			BlobberProposalAction: bpa.ConfigureProposalAction(
+				bpa.InvalidEquivocatingBlockAndBlobs{
+					BroadcastBlobsFirst: true,
+				},
+				&bpa.ProposalActionConfig{
+					MaxExecTimes: 1, // Only one execution and then disable
+				},
+			),
 			BaseTestSpec: suite_base.BaseTestSpec{
 				Name:        "equivocating-block-and-blobs",
 				DisplayName: "Equivocating Block and Blobs",
@@ -115,9 +128,14 @@ func init() {
 		},
 
 		P2PBlobsGossipTestSpec{
-			BlobberSlotAction: blobber_slot_actions.EquivocatingBlockHeaderInBlobs{
-				BroadcastBlobsFirst: false,
-			},
+			BlobberProposalAction: bpa.ConfigureProposalAction(
+				bpa.EquivocatingBlockHeaderInBlobs{
+					BroadcastBlobsFirst: false,
+				},
+				&bpa.ProposalActionConfig{
+					MaxExecTimes: 1, // Only one execution and then disable
+				},
+			),
 			BaseTestSpec: suite_base.BaseTestSpec{
 				Name:        "equivocating-block-header-in-blob-sidecars",
 				DisplayName: "Equivocating Block Header in Blob Sidecars",
@@ -132,9 +150,14 @@ func init() {
 		},
 
 		P2PBlobsGossipTestSpec{
-			BlobberSlotAction: blobber_slot_actions.EquivocatingBlockHeaderInBlobs{
-				BroadcastBlobsFirst: true,
-			},
+			BlobberProposalAction: bpa.ConfigureProposalAction(
+				bpa.EquivocatingBlockHeaderInBlobs{
+					BroadcastBlobsFirst: true,
+				},
+				&bpa.ProposalActionConfig{
+					MaxExecTimes: 1, // Only one execution and then disable
+				},
+			),
 			BaseTestSpec: suite_base.BaseTestSpec{
 				Name:        "equivocating-block-header-in-blob-sidecars-2",
 				DisplayName: "Equivocating Block Header in Blob Sidecars 2",
@@ -149,9 +172,14 @@ func init() {
 		},
 
 		P2PBlobsGossipTestSpec{
-			BlobberSlotAction: blobber_slot_actions.EquivocatingBlobSidecars{
-				BroadcastBlobsFirst: true,
-			},
+			BlobberProposalAction: bpa.ConfigureProposalAction(
+				bpa.EquivocatingBlobSidecars{
+					BroadcastBlobsFirst: true,
+				},
+				&bpa.ProposalActionConfig{
+					MaxExecTimes: 1, // Only one execution and then disable
+				},
+			),
 			BaseTestSpec: suite_base.BaseTestSpec{
 				Name:        "equivocating-blobs",
 				DisplayName: "Equivocating Blob Sidecars",

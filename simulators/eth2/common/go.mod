@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/herumi/bls-eth-go-binary v1.29.1
 	github.com/holiman/uint256 v1.2.3
-	github.com/marioevz/blobber v1.0.5-0.20231129224810-faf8d06f242c
+	github.com/marioevz/blobber v1.1.1-0.20240118042343-a77c14410011
 	github.com/marioevz/eth-clients v0.0.0-20231123180401-b4230c802498
 	github.com/marioevz/mock-builder v1.1.1-0.20231123171249-08b59e943190
 	github.com/pkg/errors v0.9.1

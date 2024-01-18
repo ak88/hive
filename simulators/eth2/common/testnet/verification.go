@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"time"
@@ -453,9 +454,10 @@ func (t *Testnet) VerifyBlobs(
 
 		if len(refSidecars) != len(blockKzgCommitments) {
 			return 0, fmt.Errorf(
-				"node %d (%s): block kzg commitments and sidecars length differ (sidecar count=%d, block kzg commitments=%d)",
+				"node %d (%s): slot %d, block kzg commitments and sidecars length differ (sidecar count=%d, block kzg commitments=%d)",
 				0,
 				t.VerificationNodes().Running()[0].ClientNames(),
+				slot,
 				len(refSidecars),
 				len(blockKzgCommitments),
 			)
@@ -475,18 +477,20 @@ func (t *Testnet) VerifyBlobs(
 						kzgHash := hasher.Sum(nil)
 						if !bytes.Equal(blobHash[1:], kzgHash[1:]) {
 							return 0, fmt.Errorf(
-								"node %d (%s): block kzg commitments and execution block hashes differ (block kzg commitment=%x, execution block hash=%x)",
+								"node %d (%s): slot %d, block kzg commitments and execution block hashes differ (block kzg commitment=%x, execution block hash=%x)",
 								0,
 								t.VerificationNodes().Running()[0].ClientNames(),
+								slot,
 								blockKzgCommitments[executionBlockHashesCount][:],
 								blobHash[:],
 							)
 						}
 						if blobHash[0] != versionedHashVersion {
 							return 0, fmt.Errorf(
-								"node %d (%s): execution blob hash does not contain the correct version: %d",
+								"node %d (%s): slot %d, execution blob hash does not contain the correct version: %d",
 								0,
 								t.VerificationNodes().Running()[0].ClientNames(),
+								slot,
 								blobHash[0],
 							)
 						}
@@ -497,9 +501,10 @@ func (t *Testnet) VerifyBlobs(
 		}
 		if executionBlockHashesCount != len(blockKzgCommitments) {
 			return 0, fmt.Errorf(
-				"node %d (%s): block kzg commitments and execution block hashes length differ (block kzg commitment count=%d, execution block hash count=%d)",
+				"node %d (%s): slot %d, block kzg commitments and execution block hashes length differ (block kzg commitment count=%d, execution block hash count=%d)",
 				0,
 				t.VerificationNodes().Running()[0].ClientNames(),
+				slot,
 				len(blockKzgCommitments),
 				executionBlockHashesCount,
 			)
@@ -507,12 +512,17 @@ func (t *Testnet) VerifyBlobs(
 
 		// Verify sidecars integrity
 		for i, sidecar := range refSidecars {
+			// Marshal the sidecar to json for logging
+			jsonSidecar, _ := json.MarshalIndent(sidecar, "", "  ")
+
 			// Check the blob index
 			if sidecar.Index != deneb.BlobIndex(i) {
+				t.Logf("INFO: sidecar: %s", jsonSidecar)
 				return 0, fmt.Errorf(
-					"node %d (%s): blob index does not match (got=%d, expected=%d)",
+					"node %d (%s): slot %d, blob index does not match (got=%d, expected=%d)",
 					0,
 					t.VerificationNodes().Running()[0].ClientNames(),
+					slot,
 					sidecar.Index,
 					i,
 				)
@@ -520,10 +530,13 @@ func (t *Testnet) VerifyBlobs(
 
 			// Verify the inclusion proof
 			if err := sidecar.VerifyProof(tree.GetHashFn()); err != nil {
+				// json log output the sidecar
+				t.Logf("INFO: sidecar: %s", jsonSidecar)
 				return 0, fmt.Errorf(
-					"node %d (%s): failed to verify proof: %v",
+					"node %d (%s): slot %d, failed to verify proof: %v",
 					0,
 					t.VerificationNodes().Running()[0].ClientNames(),
+					slot,
 					err,
 				)
 			}
@@ -531,6 +544,7 @@ func (t *Testnet) VerifyBlobs(
 			// Check the block root of included signed header
 			sidecarBlockRoot := sidecar.SignedBlockHeader.Message.HashTreeRoot(tree.GetHashFn())
 			if !bytes.Equal(sidecarBlockRoot[:], blockRoot[:]) {
+				t.Logf("INFO: sidecar: %s", jsonSidecar)
 				return 0, fmt.Errorf(
 					"node %d (%s): block root of included signed header does not match (got=%x, expected=%x)",
 					0,
@@ -542,6 +556,7 @@ func (t *Testnet) VerifyBlobs(
 
 			// Compare kzg commitment against the one in the block
 			if !bytes.Equal(sidecar.KZGCommitment[:], blockKzgCommitments[i][:]) {
+				t.Logf("INFO: sidecar: %s", jsonSidecar)
 				return 0, fmt.Errorf(
 					"node %d (%s): block kzg commitment and sidecar kzg commitment differ (block kzg commitment=%x, sidecar kzg commitment=%x)",
 					0,
@@ -554,6 +569,7 @@ func (t *Testnet) VerifyBlobs(
 			// Compare the signature against the signed block
 			blockSignature := versionedBlock.Signature()
 			if !bytes.Equal(sidecar.SignedBlockHeader.Signature[:], blockSignature[:]) {
+				t.Logf("INFO: sidecar: %s", jsonSidecar)
 				return 0, fmt.Errorf(
 					"node %d (%s): block signature and sidecar signature differ (block signature=%s, sidecar block header signature=%s)",
 					0,

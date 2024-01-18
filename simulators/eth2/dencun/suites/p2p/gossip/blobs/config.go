@@ -9,14 +9,14 @@ import (
 	"github.com/ethereum/hive/simulators/eth2/common/utils"
 	suite_base "github.com/ethereum/hive/simulators/eth2/dencun/suites/base"
 	blobber_config "github.com/marioevz/blobber/config"
-	blobber_slot_actions "github.com/marioevz/blobber/slot_actions"
+	blobber_proposal_actions "github.com/marioevz/blobber/proposal_actions"
 	beacon "github.com/protolambda/zrnt/eth2/beacon/common"
 )
 
 type P2PBlobsGossipTestSpec struct {
 	suite_base.BaseTestSpec
 
-	BlobberSlotAction             blobber_slot_actions.SlotAction
+	BlobberProposalAction         blobber_proposal_actions.ProposalAction
 	BlobberActionCausesMissedSlot bool
 
 	MaxMissedSlots beacon.Slot
@@ -31,7 +31,7 @@ func (ts P2PBlobsGossipTestSpec) GetDescription() *utils.Description {
 	desc := ts.BaseTestSpec.GetDescription()
 
 	// Print the base test spec description plus the blobber action description
-	desc.Add("Blobber Behavior", ts.BlobberSlotAction.Description())
+	desc.Add("Blobber Behavior", ts.BlobberProposalAction.Description())
 	return desc
 }
 
@@ -48,14 +48,12 @@ func (ts P2PBlobsGossipTestSpec) GetTestnetConfig(
 	config := ts.BaseTestSpec.GetTestnetConfig(allNodeDefinitions)
 
 	config.EnableBlobber = true
-	blobberActionFrequency := uint64(1)
 	if ts.BlobberActionCausesMissedSlot {
 		// Since we are missing slots due to the blobber action, we need to execute it every 2 slots to guarantee the chain doesn't stall
-		blobberActionFrequency = 2
+		ts.BlobberProposalAction.SetFrequency(2)
 	}
 	config.BlobberOptions = []blobber_config.Option{
-		blobber_config.WithSlotAction(ts.BlobberSlotAction),
-		blobber_config.WithSlotActionFrequency(blobberActionFrequency),
+		blobber_config.WithProposalAction(ts.BlobberProposalAction),
 		blobber_config.WithAlwaysErrorValidatorResponse(),
 		blobber_config.WithMaxDevP2PSessionReuses(0), // Always reuse the same peer id
 	}
